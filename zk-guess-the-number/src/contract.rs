@@ -1,4 +1,3 @@
-#![doc = include_str!("../README.md")]
 #![allow(unused_variables)]
 
 #[macro_use]
@@ -23,7 +22,7 @@ enum SecretVarType {
     SecretNumber {},
 
     #[discriminant(1)]
-    Guess { guess: u8, address: Address },
+    Guess { guess: u8, address: Address, pad: u8 },
 }
 
 #[state]
@@ -56,10 +55,11 @@ fn guess(
         state,
         vec![],
         vec![zk_compute::guess_start(
-            guess,
+            guess as u16,
             &SecretVarType::Guess {
                 address: context.sender,
                 guess,
+                pad: 0,
             },
         )],
     )
@@ -96,7 +96,7 @@ fn open_guess_result(
     let mut variables_to_open = vec![];
     for variable_id in output_variables {
         let variable = zk_state.get_variable(variable_id).unwrap();
-        if let SecretVarType::Guess { address, guess } = variable.metadata {
+        if let SecretVarType::Guess { address, guess , pad } = variable.metadata {
             variables_to_open.push(variable_id);
         }
     }
@@ -121,7 +121,7 @@ fn guess_variables_opened(
 
     for variable_id in opened_variables {
         let variable = zk_state.get_variable(variable_id).unwrap();
-        if let SecretVarType::Guess { address, guess } = variable.metadata {
+        if let SecretVarType::Guess { address, guess , pad} = variable.metadata {
             let correct = read_variable_boolean(variable);
             if correct {
                 state.winner = Some(address);

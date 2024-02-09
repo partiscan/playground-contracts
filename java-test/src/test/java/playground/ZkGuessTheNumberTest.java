@@ -130,10 +130,16 @@ public final class ZkGuessTheNumberTest extends JunitContractTest {
     guess = GuessTheNumber.guess((byte) 230);
     blockchain.sendAction(account4, zkContract, guess);
 
+    Assertions.assertThatThrownBy(
+        () -> blockchain.sendAction(
+            account1, zkContract, GuessTheNumber.guess((byte) 230)))
+        .isInstanceOf(ActionFailureException.class)
+        .hasMessageContaining("Game isn't active");
+
     GuessTheNumber.ContractState state = GuessTheNumber.ContractState
         .deserialize(blockchain.getContractState(zkContract));
 
-    assertThat(state.wrongGuesses().length).isEqualTo(4);
+    assertThat(state.wrongGuesses().length).isEqualTo(5);
     assertThat(state.winner()).isEqualTo(account4);
     assertThat(state.isActive()).isFalse();
   }
